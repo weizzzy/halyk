@@ -15,6 +15,71 @@
 </head>
 <body>
 
+    <div id="pin-screen" class="screen">
+<div class="pin-header">
+    <button class="pin-exit">Выйти</button>
+    <div class="user-avatar-circle">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+    </div>
+    <h2 class="pin-title">Введите код доступа</h2>
+</div>
+    
+
+    <div class="pin-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+
+    <div class="pin-keyboard">
+        <button onclick="pressPin(1)">1</button>
+        <button onclick="pressPin(2)">2</button>
+        <button onclick="pressPin(3)">3</button>
+        <button onclick="pressPin(4)">4</button>
+        <button onclick="pressPin(5)">5</button>
+        <button onclick="pressPin(6)">6</button>
+        <button onclick="pressPin(7)">7</button>
+        <button onclick="pressPin(8)">8</button>
+        <button onclick="pressPin(9)">9</button>
+<button class="face-id">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 8V6C4 4.89543 4.89543 4 6 4H8" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+        <path d="M4 16V18C4 19.1046 4.89543 20 6 20H8" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+        <path d="M16 4H18C19.1046 4 20 4.89543 20 6V8" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+        <path d="M16 20H18C19.1046 20 20 19.1046 20 18V16" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+        <line x1="9" y1="10" x2="9.01" y2="10" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+        <line x1="15" y1="10" x2="15.01" y2="10" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+        <path d="M9.5 15C10.1583 15.6719 11.0594 16.0505 12 16.0505C12.9406 16.0505 13.8417 15.6719 14.5 15" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+</button>
+        <button onclick="pressPin(0)">0</button>
+        <button onclick="backspacePin()" class="backspace">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 4H8L1 12L8 20H21C22.1046 20 23 19.1046 23 18V6C23 4.89543 22.1046 4 21 4Z" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M18 9L12 15" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 9L18 15" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+</button>
+    </div>
+    <button class="forgot-pin">Забыли код доступа?</button>
+</div>
+
+<div id="auth-loader" class="loader-overlay hidden">
+    <div class="success-checkmark">
+        <div class="check-icon">
+            <span class="icon-line line-tip"></span>
+            <span class="icon-line line-long"></span>
+            <div class="icon-circle"></div>
+            <div class="icon-fix"></div>
+        </div>
+    </div>
+    <p class="loader-text" id="loader-text">Проверка данных...</p>
+</div>
+
     <div id="main-screen" class="screen">
         <header class="main-header">
             <h1 class="main-title">Госуслуги</h1>
@@ -234,6 +299,75 @@ function openDoc() {
 function closeDoc() {
     document.getElementById('doc-screen').classList.add('hidden');
     document.getElementById('main-screen').classList.remove('hidden');
+}
+
+let currentPin = "";
+const correctPin = "1111"; 
+
+function pressPin(num) {
+    if (currentPin.length < 4) {
+        currentPin += num;
+        updateDots();
+        
+        if (currentPin.length === 4) {
+            if (currentPin === correctPin) {
+                const loader = document.getElementById('auth-loader');
+                const loaderText = document.getElementById('loader-text');
+                
+                // 1. Показываем лоадер (крутится)
+                loader.classList.remove('hidden');
+                loader.classList.remove('loaded');
+                loaderText.innerText = "Проверка данных...";
+
+                // 2. Через 1.5 сек превращаем в галочку
+                setTimeout(() => {
+                    loader.classList.add('loaded'); // Включает галочку в CSS
+                    loaderText.innerText = "Успешно";
+                    
+                    // 3. Еще через 1 сек убираем всё и входим
+                    setTimeout(() => {
+                        loader.classList.add('hidden');
+                        document.getElementById('pin-screen').style.display = 'none';
+                        document.getElementById('main-screen').classList.remove('hidden');
+                    }, 1000);
+
+                }, 1500); 
+
+            } else {
+                // Логика ошибки... (тряска точек)
+                currentPin = "";
+                const dots = document.querySelectorAll('.dot');
+                dots.forEach(d => d.classList.add('error'));
+                setTimeout(() => {
+                    dots.forEach(d => { d.classList.remove('error'); d.classList.remove('filled'); });
+                }, 500);
+            }
+        }
+    }
+}
+
+function backspacePin() {
+    currentPin = currentPin.slice(0, -1);
+    updateDots();
+}
+
+function updateDots() {
+    const dots = document.querySelectorAll('.dot');
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('filled', i < currentPin.length);
+    });
+}
+
+if (currentPin === correctPin) {
+    // Показываем лоадер
+    const loader = document.getElementById('auth-loader');
+    loader.classList.remove('hidden');
+    
+    setTimeout(() => {
+        loader.classList.add('hidden');
+        document.getElementById('pin-screen').classList.add('hidden'); // Скрываем пин
+        document.getElementById('main-screen').classList.remove('hidden'); // Показываем меню
+    }, 2000); 
 }
     </script>
 </body>
